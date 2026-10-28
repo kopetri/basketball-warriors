@@ -16,3 +16,4 @@ export const publicHtml = (html: string | null) =>
   (html ?? '').replace(/(?:https?:\/\/[^"'\s]+)?\/assets\/([0-9a-f-]{36})(?:\?[^"'\s]*)?/g, '/media/$1?w=960');
 
 export const media = (id: string, w: 320 | 640 | 960 | 1600 = 640) => `/media/${id}?w=${w}`;
+export const video = (id: string) => `/media/${id}`;

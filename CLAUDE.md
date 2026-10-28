@@ -30,7 +30,9 @@ that touches players or box scores keeps this gate (see `boxScore`, `roster`, `p
 - Astro, server-rendered. Pages query Postgres directly through `web/src/lib/data.ts`; the database role `web` may only
   SELECT the tables listed in `WEB_TABLES` in `sync/sync.mjs`, so a new table needs an entry there.
 - Images: `media(id, width)` from `web/src/lib/format.ts`, served by `web/src/pages/media/[id].ts`, which allows the
-  widths 320, 640, 960 and 1600 only. The CMS itself is not reachable from the internet.
+  widths 320, 640, 960 and 1600 only. Videos (player intro clips, `players.clip`): `video(id)`, served as the original
+  file with Range support (Safari needs it). Only files referenced by published content pass (`isPublicFile`).
+  The CMS itself is not reachable from the internet.
 - Design: colour tokens on `:root` in `web/src/layouts/Base.astro` (dark theme, colours from the logo), system font
   stack, everything self-hosted. The site sets no cookies and loads nothing from other servers (German privacy law).
 - Text on the site is German. Dates come from the database as `YYYY-MM-DD` strings; format them with the helpers in

@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { player as getPlayer } from '../../lib/data';
-import { avg, day, media, pct, publicHtml } from '../../lib/format';
+import { avg, day, media, pct, publicHtml, video } from '../../lib/format';
 
 const p = await getPlayer(Astro.params.slug ?? '');
 if (!p) return Astro.rewrite('/404');
@@ -17,7 +17,13 @@ const stats = [
 
 <Base title={`${p.first_name} ${p.last_name}`} description={`${p.first_name} ${p.last_name} – Spieler der TG Bad Waldsee Warriors`}>
   <section class="profile">
-    {p.photo && <img src={media(p.photo, 960)} alt={`${p.first_name} ${p.last_name}`} width="320" />}
+    {
+      p.clip ? (
+        <video class="intro" src={video(p.clip)} muted playsinline preload="auto" aria-label={`Intro-Clip von ${p.first_name} ${p.last_name}`} data-intro />
+      ) : (
+        p.photo && <img src={media(p.photo, 960)} alt={`${p.first_name} ${p.last_name}`} width="320" />
+      )
+    }
     <div>
       <p class="muted">{[p.jersey_number !== null ? `#${p.jersey_number}` : null, p.position].filter(Boolean).join(' · ')}</p>
       <h1>{p.first_name} <span class="last">{p.last_name}</span></h1>
@@ -73,10 +79,22 @@ const stats = [
   <p class="section"><a href="/team">← Team</a></p>
 </Base>
 
+<script>
+  // The intro plays once and stops on the final pose; with reduced motion that pose is shown as a still instead.
+  for (const v of document.querySelectorAll<HTMLVideoElement>('video[data-intro]')) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      v.addEventListener('loadedmetadata', () => (v.currentTime = v.duration - 0.05), { once: true });
+    } else {
+      v.play().catch(() => {});
+    }
+  }
+</script>
+
 <style>
   .profile { display: grid; gap: 24px; align-items: start; }
   @media (min-width: 760px) { .profile { grid-template-columns: 320px 1fr; } }
   .profile img { border-radius: var(--radius); width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+  .profile .intro { border-radius: var(--radius); width: 100%; aspect-ratio: 3 / 4; object-fit: cover; background: var(--bg); }
   .last { color: var(--orange); }
   .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin: 0 0 20px; }
   .stats div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
