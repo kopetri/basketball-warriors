@@ -4,3 +4,4 @@ data/
 node_modules/
 dist/
 .astro/
+tools/player-clip/out/

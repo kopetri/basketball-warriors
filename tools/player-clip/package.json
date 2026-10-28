@@ -1,0 +1,12 @@
+{
+  "name": "player-clip",
+  "private": true,
+  "type": "module",
+  "description": "Player intro clip pipeline on Replicate: start/end frames, dark backdrop, image-to-video",
+  "scripts": {
+    "test": "node --test player-clip.test.mjs"
+  },
+  "dependencies": {
+    "sharp": "^0.35.5"
+  }
+}
