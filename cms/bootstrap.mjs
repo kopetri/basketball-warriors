@@ -40,6 +40,7 @@ const collections = [
       { field: 'jersey_number', type: 'integer', meta: { width: 'half', interface: 'input' }, schema: {} },
       text('position', { width: 'half', interface: 'select-dropdown', options: { choices: ['Guard', 'Forward', 'Center'].map((v) => ({ text: v, value: v })) } }),
       image('photo'),
+      { field: 'clip', type: 'uuid', meta: { interface: 'file', special: ['file'], note: 'Intro-Clip als MP4 (erstellt mit tools/player-clip). Ersetzt auf der Spielerseite das Foto.' }, schema: {} },
       html('bio'),
       m2o('dbb_person', '{{first_name}} {{last_name}}', 'Verknüpfung mit den DBB-Spielstatistiken'),
       { field: 'consent', type: 'boolean', meta: { interface: 'boolean', note: 'Schriftliche Einwilligung für Name, Foto und Statistiken liegt vor', options: { label: 'Einwilligung liegt vor' } }, schema: { default_value: false, is_nullable: false } },
@@ -68,6 +69,7 @@ const collections = [
 
 const relations = [
   ['players', 'photo', 'directus_files'],
+  ['players', 'clip', 'directus_files'],
   ['players', 'dbb_person', 'dbb_persons'],
   ['news', 'cover', 'directus_files'],
   ['news', 'game', 'dbb_games'],
@@ -105,8 +107,17 @@ const login = await api('POST', '/auth/login', { email: process.env.ADMIN_EMAIL,
 token = login.access_token;
 
 for (const c of collections) {
-  if (await exists(`/collections/${c.collection}`)) console.log('exists', c.collection);
-  else console.log('created', (await api('POST', '/collections', { ...c, schema: {} })).collection);
+  if (!(await exists(`/collections/${c.collection}`))) {
+    console.log('created', (await api('POST', '/collections', { ...c, schema: {} })).collection);
+    continue;
+  }
+  console.log('exists', c.collection);
+  // fields added to this file later reach existing installations on the next run
+  for (const field of c.fields) {
+    if (await exists(`/fields/${c.collection}/${field.field}`)) continue;
+    await api('POST', `/fields/${c.collection}`, field);
+    console.log('added field', `${c.collection}.${field.field}`);
+  }
 }
 
 for (const [collection, field, related] of relations) {

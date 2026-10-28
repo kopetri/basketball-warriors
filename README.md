@@ -10,6 +10,7 @@ Background and decisions: `docs/research.md` (DBB API) and `docs/architecture.md
 | `cms/bootstrap.mjs` | One-time Directus setup: collections `players`, `news`, `pages`, relations, legal page drafts |
 | `infra/cloudflared/` | Shared Cloudflare Tunnel of the NAS (separate project) |
 | `infra/deployer/` | Pulls `main` from GitHub every 5 min and deploys signed commits (separate project) |
+| `tools/player-clip/` | Player intro clip from one photo via Replicate: start/end frames, dark backdrop, video. Usage in the file header |
 
 ## Tests
 

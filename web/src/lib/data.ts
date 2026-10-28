@@ -90,7 +90,7 @@ const SEASON_LINES = `select s.* from dbb_player_game_stats s
 
 export async function roster() {
   return q(
-    `select p.id, p.slug, p.first_name, p.last_name, p.jersey_number, p.position, p.photo, ${STATS}
+    `select p.id, p.slug, p.first_name, p.last_name, p.jersey_number, p.position, p.photo, p.clip, ${STATS}
      from players p
      left join (${SEASON_LINES}) s on s.person_id = p.dbb_person
      where p.status = 'published' and p.consent
@@ -112,13 +112,14 @@ export async function player(slug: string) {
   if (!p) return undefined;
   const log = p.dbb_person
     ? await q(
-        `${GAME_SQL} join dbb_player_game_stats s using (match_id)
+        `select x.*, row_to_json(s) as line
+         from (${GAME_SQL}) x join dbb_player_game_stats s on s.match_id = x.match_id
          where s.person_id = $1 and s.team_permanent_id = $2
-         order by g.kickoff_date desc`,
+         order by x.kickoff_date desc`,
         [p.dbb_person, TEAM_ID],
       )
     : [];
-  return { ...p, log: log.map((row) => ({ ...shapeGame(row), line: row })) };
+  return { ...p, log: log.map((row) => ({ ...shapeGame(row), line: row.line })) };
 }
 
 export async function newsList(limit = 50) {
@@ -140,11 +141,11 @@ export async function page(slug: string) {
   return p;
 }
 
-// Images are served only when a published page, post or consented player references them.
+// Files are served only when a published page, post or consented player references them.
 export async function isPublicFile(id: string) {
   const [r] = await q(
     `select exists (
-       select 1 from players where photo = $1::uuid and consent and status = 'published'
+       select 1 from players where $1::uuid in (photo, clip) and consent and status = 'published'
        union all select 1 from news where cover = $1::uuid and status = 'published'
        union all select 1 from news where status = 'published' and body like '%' || $1 || '%'
        union all select 1 from pages where body like '%' || $1 || '%'
