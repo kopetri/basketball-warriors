@@ -1,0 +1,85 @@
+---
+import Base from '../../layouts/Base.astro';
+import { player as getPlayer } from '../../lib/data';
+import { avg, day, media, pct, publicHtml } from '../../lib/format';
+
+const p = await getPlayer(Astro.params.slug ?? '');
+if (!p) return Astro.rewrite('/404');
+const stats = [
+  ['Spiele', p.games],
+  ['Punkte', p.points],
+  ['Pkt/Spiel', avg(p.points, p.games)],
+  ['Dreier', p.fg3_made],
+  ['Freiwurf %', pct(p.ft_made, p.ft_attempted)],
+  ['Fouls/Spiel', avg(p.fouls, p.games)],
+];
+---
+
+<Base title={`${p.first_name} ${p.last_name}`} description={`${p.first_name} ${p.last_name} – Spieler der TG Bad Waldsee Warriors`}>
+  <section class="profile">
+    {p.photo && <img src={media(p.photo, 960)} alt={`${p.first_name} ${p.last_name}`} width="320" />}
+    <div>
+      <p class="muted">{[p.jersey_number !== null ? `#${p.jersey_number}` : null, p.position].filter(Boolean).join(' · ')}</p>
+      <h1>{p.first_name} <span class="last">{p.last_name}</span></h1>
+      <dl class="stats">
+        {stats.map(([k, v]) => (
+          <div>
+            <dt>{k}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))}
+      </dl>
+      {p.bio && <div class="prose" set:html={publicHtml(p.bio)} />}
+    </div>
+  </section>
+
+  {
+    p.log.length > 0 && (
+      <section class="card section">
+        <h2>Spiele</h2>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Gegner</th>
+                <th class="num">Erg.</th>
+                <th class="num">Pkt</th>
+                <th class="num">2P</th>
+                <th class="num">3P</th>
+                <th class="num">FW</th>
+                <th class="num">F</th>
+              </tr>
+            </thead>
+            <tbody>
+              {p.log.map((g) => (
+                <tr>
+                  <td>{day(g.kickoff_date)}</td>
+                  <td><a href={g.href}>{g.home ? '' : '@ '}{g.opponent}</a></td>
+                  <td class="num">{g.us}:{g.them}</td>
+                  <td class="num"><strong>{g.line.points}</strong></td>
+                  <td class="num">{g.line.fg2_made}</td>
+                  <td class="num">{g.line.fg3_made}</td>
+                  <td class="num">{g.line.ft_made}/{g.line.ft_attempted}</td>
+                  <td class="num">{g.line.fouls}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )
+  }
+  <p class="section"><a href="/team">← Team</a></p>
+</Base>
+
+<style>
+  .profile { display: grid; gap: 24px; align-items: start; }
+  @media (min-width: 760px) { .profile { grid-template-columns: 320px 1fr; } }
+  .profile img { border-radius: var(--radius); width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+  .last { color: var(--orange); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin: 0 0 20px; }
+  .stats div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .stats dt { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stats dd { margin: 2px 0 0; font-size: 1.5rem; font-weight: 850; font-variant-numeric: tabular-nums; }
+</style>

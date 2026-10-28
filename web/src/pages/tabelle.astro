@@ -1,0 +1,21 @@
+---
+import Base from '../layouts/Base.astro';
+import Standings from '../components/Standings.astro';
+import { standings } from '../lib/data';
+
+const rows = await standings();
+const byLeague = Map.groupBy(rows, (r: any) => r.league_name);
+---
+
+<Base title="Tabelle" description="Aktuelle Tabelle der Liga der TG Bad Waldsee Warriors.">
+  <h1>Tabelle</h1>
+  {rows.length === 0 && <p class="muted">Noch keine Tabelle verfügbar.</p>}
+  {
+    [...byLeague].map(([league, leagueRows]) => (
+      <section class="card section">
+        <h2>{league}</h2>
+        <Standings rows={leagueRows} />
+      </section>
+    ))
+  }
+</Base>

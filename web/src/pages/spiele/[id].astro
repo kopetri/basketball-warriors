@@ -1,0 +1,71 @@
+---
+import Base from '../../layouts/Base.astro';
+import BoxScore from '../../components/BoxScore.astro';
+import { game as getGame, boxScore } from '../../lib/data';
+import { longDay, time } from '../../lib/format';
+
+const id = Number(Astro.params.id);
+const g = Number.isInteger(id) ? await getGame(id) : undefined;
+if (!g) return Astro.rewrite('/404');
+const box = await boxScore(g.match_id);
+const periods: [number, number][] = g.quarters ?? [];
+const label = (i: number) => (i < 4 ? `${i + 1}. V` : `OT${i > 4 ? i - 3 : ''}`);
+---
+
+<Base title={`${g.home_name} – ${g.guest_name}`} description={`${g.league_name}: ${g.home_name} gegen ${g.guest_name}`}>
+  <p class="muted">{g.league_name} · {g.match_day}. Spieltag · {longDay(g.kickoff_date)}{g.kickoff_time && `, ${time(g.kickoff_time)} Uhr`}</p>
+  <section class="score card">
+    <span class="team">{g.home_name}</span>
+    <span class="nums">{g.played ? `${g.home_score} : ${g.guest_score}` : '– : –'}</span>
+    <span class="team">{g.guest_name}</span>
+  </section>
+  {g.played && !g.confirmed && <p><span class="pill">vorläufig</span> <span class="muted">Ergebnis noch nicht vom Verband bestätigt.</span></p>}
+  {g.venue_name && <p class="muted">{g.venue_name}, {g.venue_street}, {g.venue_zip} {g.venue_city}</p>}
+
+  {
+    periods.length > 0 && (
+      <section class="card section">
+        <h2>Viertel</h2>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Team</th>
+                {periods.map((_, i) => <th class="num">{label(i)}</th>)}
+                <th class="num">Ges.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class={g.home ? 'us' : undefined}>
+                <td>{g.home_name}</td>
+                {periods.map(([h]) => <td class="num">{h}</td>)}
+                <td class="num">{g.home_score}</td>
+              </tr>
+              <tr class={g.home ? undefined : 'us'}>
+                <td>{g.guest_name}</td>
+                {periods.map(([, a]) => <td class="num">{a}</td>)}
+                <td class="num">{g.guest_score}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    box.lines.length > 0 && (
+      <section class="card section">
+        <h2>Boxscore</h2>
+        <BoxScore lines={box.lines} opponent={box.opponent} opponentName={g.opponent} />
+      </section>
+    )
+  }
+  <p class="section"><a href="/spielplan">← Spielplan</a></p>
+</Base>
+
+<style>
+  .score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; text-align: center; margin-top: 10px; }
+  .team { font-weight: 800; font-size: clamp(1rem, 3vw, 1.35rem); }
+  .nums { font-size: clamp(2rem, 8vw, 3.4rem); font-weight: 900; color: var(--orange); font-variant-numeric: tabular-nums; }
+</style>

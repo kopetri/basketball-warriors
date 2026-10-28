@@ -1,0 +1,66 @@
+---
+import type { Game } from '../lib/data';
+import { day, time } from '../lib/format';
+
+interface Props {
+  games: Game[];
+}
+const { games } = Astro.props;
+---
+
+<ul class="games">
+  {
+    games.map((g) => (
+      <li>
+        <a class="game" href={g.played ? g.href : undefined}>
+          <span class="when">
+            {day(g.kickoff_date)}
+            <span class="muted">{g.played ? '' : time(g.kickoff_time)}</span>
+          </span>
+          <span class="where muted">{g.home ? 'Heim' : 'Ausw.'}</span>
+          <span class="opp">{!g.home && <span class="at muted">@ </span>}{g.opponent}</span>
+          <span class="res">
+            {g.cancelled ? (
+              <span class="badge open">abgesagt</span>
+            ) : g.played ? (
+              <>
+                <span>
+                  <span class={`badge ${g.won ? 'win' : 'loss'}`}>{g.won ? 'S' : 'N'}</span> {g.us}:{g.them}
+                </span>
+                {!g.confirmed && <span class="pill" title="Ergebnis noch nicht vom Verband bestätigt">vorläufig</span>}
+              </>
+            ) : (
+              <span class="badge open">–</span>
+            )}
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .games { list-style: none; margin: 0; padding: 0; }
+  .game {
+    display: grid;
+    grid-template-columns: 7.2em 3.4em 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 6px;
+    border-bottom: 1px solid var(--line);
+    color: var(--text);
+    text-decoration: none;
+  }
+  a.game[href]:hover { background: var(--surface-2); }
+  .when { font-variant-numeric: tabular-nums; }
+  .when .muted { display: block; font-size: 0.85rem; }
+  .opp { font-weight: 650; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .res { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .res .pill { font-size: 0.68rem; }
+  .at { display: none; }
+  @media (max-width: 480px) {
+    .game { grid-template-columns: 5.6em 1fr auto; }
+    .where { display: none; }
+    .at { display: inline; }
+  }
+</style>

@@ -1,0 +1,36 @@
+---
+import Base from '../../layouts/Base.astro';
+import { newsList } from '../../lib/data';
+import { media, newsDate } from '../../lib/format';
+
+const posts = await newsList();
+---
+
+<Base title="News" description="Neuigkeiten der TG Bad Waldsee Warriors.">
+  <h1>News</h1>
+  {posts.length === 0 && <p class="muted">Noch keine Beiträge.</p>}
+  <div class="list section">
+    {
+      posts.map((n) => (
+        <a class="card post" href={`/news/${n.slug}`}>
+          {n.cover && <img src={media(n.cover, 640)} alt="" loading="lazy" />}
+          <div>
+            <span class="muted">{newsDate(n.date_published)}</span>
+            <h2>{n.title}</h2>
+            {n.summary && <p>{n.summary}</p>}
+          </div>
+        </a>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .list { display: grid; gap: 16px; }
+  .post { display: grid; gap: 16px; color: var(--text); text-decoration: none; }
+  .post:hover { border-color: var(--orange); color: var(--text); }
+  @media (min-width: 640px) { .post { grid-template-columns: 240px 1fr; } }
+  .post img { border-radius: 10px; aspect-ratio: 16 / 9; object-fit: cover; width: 100%; }
+  .post h2 { color: var(--text); text-transform: none; letter-spacing: 0; font-size: 1.3rem; margin: 4px 0 6px; }
+  .post p { margin: 0; color: var(--muted); }
+</style>

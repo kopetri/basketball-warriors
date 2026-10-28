@@ -1,0 +1,125 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title, description = 'Basketball bei der TG Bad Waldsee: Spielplan, Ergebnisse, Tabelle, Team und News der Warriors.' } = Astro.props;
+const path = Astro.url.pathname;
+const nav = [
+  ['/', 'Start'],
+  ['/spielplan', 'Spielplan'],
+  ['/tabelle', 'Tabelle'],
+  ['/team', 'Team'],
+  ['/news', 'News'],
+];
+const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title ? `${title} · TG Bad Waldsee Warriors` : 'TG Bad Waldsee Warriors'}</title>
+    <meta name="description" content={description} />
+    {process.env.SITE_URL && <link rel="canonical" href={process.env.SITE_URL + path} />}
+    <link rel="icon" href="/favicon.png" />
+    <meta name="theme-color" content="#0b0707" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="/">
+          <img src="/logo.png" alt="" width="52" height="52" />
+          <span>TG Bad Waldsee <strong>Warriors</strong></span>
+        </a>
+        <nav aria-label="Hauptnavigation">
+          {nav.map(([href, label]) => <a href={href} aria-current={isActive(href) ? 'page' : undefined}>{label}</a>)}
+        </nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <span>© TG Bad Waldsee Warriors · Daten: <a href="https://www.basketball-bund.net">basketball-bund.net</a></span>
+        <span><a href="/impressum">Impressum</a> · <a href="/datenschutz">Datenschutz</a></span>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #0b0707;
+    --surface: #191715;
+    --surface-2: #231f1c;
+    --line: #312e29;
+    --text: #f5f4f0;
+    --muted: #a59e98;
+    --orange: #f47f0d;
+    --orange-deep: #e1590b;
+    --green: #6ca60c;
+    --lime: #dfe336;
+    --radius: 14px;
+    --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 var(--font);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  main { flex: 1; padding-block: 28px 56px; }
+  a { color: var(--orange); }
+  a:hover { color: var(--lime); }
+  img { max-width: 100%; height: auto; }
+  h1, h2, h3 { line-height: 1.15; margin: 0 0 14px; letter-spacing: 0.01em; }
+  h1 { font-size: clamp(1.7rem, 4.5vw, 2.5rem); font-weight: 850; text-transform: uppercase; }
+  h2 { font-size: 1.15rem; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.08em; }
+  .wrap { width: 100%; max-width: 1080px; margin-inline: auto; padding-inline: 16px; }
+  .muted { color: var(--muted); }
+  .section { margin-top: 36px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+  .grid { display: grid; gap: 16px; align-items: start; }
+  .grid > * { min-width: 0; } /* lets wide tables scroll inside their card instead of widening the page */
+  @media (min-width: 760px) { .grid-2 { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+
+  .site-header { border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #160d08, var(--bg)); }
+  .header-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px; padding-block: 12px; }
+  .brand { display: flex; align-items: center; gap: 12px; color: var(--text); text-decoration: none; font-weight: 700; line-height: 1.1; }
+  .brand strong { display: block; color: var(--green); font-size: 1.35rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+  .site-header nav { display: flex; gap: 4px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .site-header nav a { color: var(--text); text-decoration: none; font-weight: 650; padding: 8px 12px; border-radius: 999px; }
+  .site-header nav a:hover { background: var(--surface-2); color: var(--text); }
+  .site-header nav a[aria-current='page'] { background: var(--orange); color: #140a04; }
+
+  .site-footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; }
+  .footer-inner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; padding-block: 20px; }
+  .site-footer a { color: var(--muted); }
+
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+  td.num, th.num { text-align: right; }
+  tr.us td { background: rgba(244, 127, 13, 0.12); font-weight: 750; }
+  tr.us td:first-child { box-shadow: inset 3px 0 0 var(--orange); }
+
+  .badge { display: inline-block; min-width: 1.9em; text-align: center; padding: 2px 7px; border-radius: 6px; font-size: 0.8rem; font-weight: 800; }
+  .badge.win { background: var(--green); color: #0b1402; }
+  .badge.loss { background: var(--orange-deep); color: #1a0702; }
+  .badge.open { background: var(--surface-2); color: var(--muted); }
+  .pill { display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--lime); border: 1px solid currentColor; border-radius: 999px; padding: 1px 8px; vertical-align: middle; }
+
+  .prose { max-width: 70ch; }
+  .prose h2 { color: var(--text); text-transform: none; letter-spacing: 0; margin-top: 28px; }
+  .prose img { border-radius: var(--radius); }
+</style>

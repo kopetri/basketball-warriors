@@ -1,0 +1,42 @@
+---
+import { TEAM_ID } from '../lib/data';
+
+interface Props {
+  rows: any[];
+  compact?: boolean;
+}
+const { rows, compact = false } = Astro.props;
+---
+
+<div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th class="num">#</th>
+        <th>Team</th>
+        <th class="num" title="Spiele">Sp</th>
+        <th class="num" title="Siege">S</th>
+        <th class="num" title="Niederlagen">N</th>
+        {!compact && <th class="num">Körbe</th>}
+        <th class="num" title="Korbdifferenz">Diff</th>
+        <th class="num" title="Punkte">Pkt</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((r) => (
+          <tr class={r.team_permanent_id === TEAM_ID ? 'us' : undefined}>
+            <td class="num">{r.rank}</td>
+            <td>{r.name}</td>
+            <td class="num">{r.games}</td>
+            <td class="num">{r.wins}</td>
+            <td class="num">{r.losses}</td>
+            {!compact && <td class="num">{r.points_for}:{r.points_against}</td>}
+            <td class="num">{r.points_for - r.points_against > 0 ? '+' : ''}{r.points_for - r.points_against}</td>
+            <td class="num">{r.points}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

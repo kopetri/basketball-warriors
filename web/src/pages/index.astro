@@ -1,0 +1,94 @@
+---
+import Base from '../layouts/Base.astro';
+import GameList from '../components/GameList.astro';
+import Standings from '../components/Standings.astro';
+import { seasonGames, standings, newsList } from '../lib/data';
+import { longDay, time, newsDate, media } from '../lib/format';
+
+const [games, table, news] = await Promise.all([seasonGames(), standings(), newsList(3)]);
+const next = games.find((g) => !g.played && !g.cancelled);
+const played = games.filter((g) => g.played);
+const recent = played.slice(-3).reverse();
+const wins = played.filter((g) => g.won).length;
+const season = games[0]?.season_name;
+const venue = next && [next.venue_name, next.venue_street, [next.venue_zip, next.venue_city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+---
+
+<Base>
+  <section class="hero">
+    <img class="hero-logo" src="/logo.png" alt="Logo der TG Bad Waldsee Warriors" width="200" height="200" />
+    <div>
+      <h1>TG Bad Waldsee <span class="green">Warriors</span></h1>
+      <p class="muted">
+        Herren · {games[0]?.league_name ?? 'Basketball'}{season && ` · Saison ${season}`}
+        {played.length > 0 && <> · {wins} {wins === 1 ? 'Sieg' : 'Siege'}, {played.length - wins} {played.length - wins === 1 ? 'Niederlage' : 'Niederlagen'}</>}
+      </p>
+    </div>
+  </section>
+
+  {
+    next && (
+      <section class="section card next">
+        <h2>Nächstes Spiel</h2>
+        <p class="matchup">
+          <span>{next.home ? 'TG Bad Waldsee' : next.opponent}</span>
+          <span class="vs">vs</span>
+          <span>{next.home ? next.opponent : 'TG Bad Waldsee'}</span>
+        </p>
+        <p class="when">
+          {longDay(next.kickoff_date)}
+          {next.kickoff_time && `, ${time(next.kickoff_time)} Uhr`} · {next.home ? 'Heimspiel' : 'Auswärtsspiel'}
+        </p>
+        {venue && (
+          <p class="muted">
+            {venue} · <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`}>Karte</a>
+          </p>
+        )}
+      </section>
+    )
+  }
+
+  <div class="section grid grid-2">
+    <section class="card">
+      <h2>Letzte Ergebnisse</h2>
+      {recent.length ? <GameList games={recent} /> : <p class="muted">Noch keine Ergebnisse in dieser Saison.</p>}
+      <p><a href="/spielplan">Ganzer Spielplan →</a></p>
+    </section>
+    <section class="card">
+      <h2>Tabelle</h2>
+      {table.length ? <Standings rows={table} compact /> : <p class="muted">Noch keine Tabelle.</p>}
+      <p><a href="/tabelle">Zur Tabelle →</a></p>
+    </section>
+  </div>
+
+  {
+    news.length > 0 && (
+      <section class="section">
+        <h2>News</h2>
+        <div class="grid grid-3">
+          {news.map((n) => (
+            <a class="card news-card" href={`/news/${n.slug}`}>
+              {n.cover && <img src={media(n.cover, 640)} alt="" loading="lazy" />}
+              <span class="muted">{newsDate(n.date_published)}</span>
+              <strong>{n.title}</strong>
+            </a>
+          ))}
+        </div>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  .hero { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .hero-logo { width: clamp(110px, 22vw, 200px); filter: drop-shadow(0 6px 24px rgba(244, 127, 13, 0.25)); }
+  .hero h1 { margin-bottom: 6px; }
+  .green { color: var(--green); }
+  .next { border-color: var(--orange); background: linear-gradient(135deg, rgba(244, 127, 13, 0.16), var(--surface) 60%); }
+  .matchup { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; font-size: clamp(1.3rem, 4vw, 1.9rem); font-weight: 850; margin: 0 0 6px; }
+  .vs { color: var(--orange); font-size: 0.9rem; text-transform: uppercase; }
+  .when { font-weight: 650; margin: 0 0 4px; }
+  .news-card { display: flex; flex-direction: column; gap: 6px; color: var(--text); text-decoration: none; }
+  .news-card:hover { border-color: var(--orange); color: var(--text); }
+  .news-card img { border-radius: 10px; aspect-ratio: 16 / 9; object-fit: cover; width: 100%; }
+</style>

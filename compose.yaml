@@ -1,0 +1,94 @@
+# TG Bad Waldsee Warriors website. See docs/architecture.md.
+# Secrets come from .env next to this file (see .env.example). No ports are published:
+# web and cms are reached only through the shared Cloudflare Tunnel (network "tunnel", project infra/cloudflared).
+name: warriors
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: warriors
+      POSTGRES_USER: warriors
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warriors -d warriors"]
+      interval: 10s
+      retries: 6
+
+  cms:
+    image: directus/directus:12.5.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SECRET: ${DIRECTUS_SECRET:?}
+      DB_CLIENT: pg
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: warriors
+      DB_USER: warriors
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:?}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:?}
+      PUBLIC_URL: ${CMS_URL:-https://warriors-cms.hartwig-bw.de}
+      TELEMETRY: "false"
+    volumes:
+      - ./data/uploads:/directus/uploads
+    networks: [default, tunnel]
+    healthcheck:
+      # /server/health needs a login once Directus setup is completed (403); /server/ping stays public
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8055/server/ping || exit 1"]
+      interval: 15s
+      retries: 8
+
+  sync:
+    build: ./sync
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://warriors:${POSTGRES_PASSWORD}@db:5432/warriors
+      WEB_DB_PASSWORD: ${WEB_DB_PASSWORD:?}
+      TEAM_ID: "319452"
+      SYNC_INTERVAL_MINUTES: "60"
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://web:${WEB_DB_PASSWORD}@db:5432/warriors
+      DIRECTUS_URL: http://cms:8055
+      TEAM_ID: "319452"
+      SITE_URL: ${SITE_URL:-https://warriors.hartwig-bw.de}
+    networks: [default, tunnel]
+
+  backup:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    user: "70:70" # data/backups belongs to the alpine postgres user
+    entrypoint: ["/bin/sh", "/backup/backup.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: warriors
+      PGDATABASE: warriors
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      KEEP_DAYS: "14"
+      TZ: Europe/Berlin
+    volumes:
+      - ./backup:/backup:ro
+      - ./data/backups:/backups
+
+networks:
+  tunnel:
+    external: true

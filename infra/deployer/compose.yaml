@@ -1,0 +1,19 @@
+# Pull-based deployer for the warriors stack. Separate project, so a deploy never recreates the deployer itself.
+# Start on the NAS: sudo docker compose -f /volume1/docker/warriors/infra/deployer/compose.yaml up -d --build
+# /volume1/docker/deployer holds the read-only GitHub deploy key and known_hosts (never in Git).
+name: deployer
+
+services:
+  deployer:
+    build: .
+    restart: unless-stopped
+    environment:
+      REPO: git@github.com:kopetri/basketball-warriors.git
+      # same path inside and outside, so compose resolves ./data and build contexts to real NAS paths
+      APP_DIR: /volume1/docker/warriors
+      INTERVAL: "300"
+      TZ: Europe/Berlin
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /volume1/docker/warriors:/volume1/docker/warriors
+      - /volume1/docker/deployer:/deploy:ro

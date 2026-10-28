@@ -1,0 +1,75 @@
+---
+import Base from '../../layouts/Base.astro';
+import { roster } from '../../lib/data';
+import { avg, media } from '../../lib/format';
+
+const players = await roster();
+---
+
+<Base title="Team" description="Der Kader der TG Bad Waldsee Warriors mit Saisonstatistiken.">
+  <h1>Team</h1>
+  {players.length === 0 && <p class="muted">Der Kader wird gerade eingepflegt.</p>}
+  <div class="grid roster section">
+    {
+      players.map((p) => (
+        <a class="card player" href={`/team/${p.slug}`}>
+          {p.photo ? <img src={media(p.photo, 640)} alt="" loading="lazy" /> : <span class="placeholder">{p.first_name[0]}{p.last_name[0]}</span>}
+          <span class="name">
+            {p.jersey_number !== null && <span class="number">#{p.jersey_number}</span>}
+            {p.first_name} <strong>{p.last_name}</strong>
+          </span>
+          <span class="muted">{[p.position, p.games ? `${avg(p.points, p.games)} Pkt/Spiel` : null].filter(Boolean).join(' · ')}</span>
+        </a>
+      ))
+    }
+  </div>
+
+  {
+    players.some((p) => p.games > 0) && (
+      <section class="card section">
+        <h2>Saisonstatistik</h2>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Spieler</th>
+                <th class="num" title="Spiele">Sp</th>
+                <th class="num" title="Punkte">Pkt</th>
+                <th class="num" title="Punkte pro Spiel">Pkt/Sp</th>
+                <th class="num" title="Dreier getroffen">3P</th>
+                <th class="num" title="Freiwürfe">FW</th>
+                <th class="num" title="Fouls">F</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...players]
+                .filter((p) => p.games > 0)
+                .sort((a, b) => b.points - a.points)
+                .map((p) => (
+                  <tr>
+                    <td><a href={`/team/${p.slug}`}>{p.first_name} {p.last_name}</a></td>
+                    <td class="num">{p.games}</td>
+                    <td class="num">{p.points}</td>
+                    <td class="num">{avg(p.points, p.games)}</td>
+                    <td class="num">{p.fg3_made}</td>
+                    <td class="num">{p.ft_made}/{p.ft_attempted}</td>
+                    <td class="num">{p.fouls}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  .roster { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .player { display: flex; flex-direction: column; gap: 6px; padding: 12px; color: var(--text); text-decoration: none; }
+  .player:hover { border-color: var(--orange); color: var(--text); }
+  .player img, .placeholder { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 10px; }
+  .placeholder { display: grid; place-items: center; background: var(--surface-2); color: var(--orange); font-size: 2.4rem; font-weight: 900; }
+  .name { font-size: 1.05rem; line-height: 1.25; }
+  .number { color: var(--orange); font-weight: 900; margin-right: 6px; }
+</style>

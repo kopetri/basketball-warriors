@@ -1,0 +1,12 @@
+{
+  "name": "warriors-sync",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node sync.mjs",
+    "test": "node --test map.test.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  }
+}

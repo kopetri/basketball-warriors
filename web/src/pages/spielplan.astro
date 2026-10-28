@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+import GameList from '../components/GameList.astro';
+import { seasonGames } from '../lib/data';
+
+const games = await seasonGames();
+const leagues = [...new Set(games.map((g) => g.league_name))];
+---
+
+<Base title="Spielplan" description="Alle Spiele und Ergebnisse der TG Bad Waldsee Warriors in dieser Saison.">
+  <h1>Spielplan</h1>
+  <p class="muted">Saison {games[0]?.season_name ?? '–'} · {leagues.join(', ')}</p>
+  <section class="card section">
+    {games.length ? <GameList games={games} /> : <p class="muted">Noch keine Spiele angesetzt.</p>}
+  </section>
+</Base>

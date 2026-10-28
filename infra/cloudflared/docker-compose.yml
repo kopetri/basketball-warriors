@@ -1,0 +1,16 @@
+# Shared Cloudflare Tunnel for the NAS (tunnel "nas").
+# Public hostnames are configured in the Cloudflare dashboard, not here.
+# Deployed to /volume1/docker/cloudflared. TUNNEL_TOKEN lives in .env next to this file (never in Git).
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.1
+    command: tunnel --no-autoupdate run
+    env_file: .env
+    restart: unless-stopped
+    networks:
+      - tunnel
+
+networks:
+  # App projects (e.g. warriors) join this network as external to be reachable by the tunnel.
+  tunnel:
+    name: tunnel

@@ -1,0 +1,71 @@
+---
+import { pct } from '../lib/format';
+
+interface Props {
+  lines: any[];
+  opponent: any;
+  opponentName: string;
+}
+const { lines, opponent, opponentName } = Astro.props;
+const sum = (k: string) => lines.reduce((s, l) => s + (l[k] ?? 0), 0);
+---
+
+<div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Spieler</th>
+        <th class="num">Pkt</th>
+        <th class="num" title="Zweier getroffen">2P</th>
+        <th class="num" title="Dreier getroffen">3P</th>
+        <th class="num" title="Freiwürfe">FW</th>
+        <th class="num">FW %</th>
+        <th class="num" title="Fouls">F</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        lines.map((l) => (
+          <tr>
+            <td>{l.slug ? <a href={`/team/${l.slug}`}>{l.first_name} {l.last_name}</a> : <span class="muted">Spieler</span>}</td>
+            <td class="num">
+              <strong>{l.points}</strong>
+            </td>
+            <td class="num">{l.fg2_made}</td>
+            <td class="num">{l.fg3_made}</td>
+            <td class="num">{l.ft_made}/{l.ft_attempted}</td>
+            <td class="num">{pct(l.ft_made, l.ft_attempted)}</td>
+            <td class="num">{l.fouls}</td>
+          </tr>
+        ))
+      }
+      <tr class="us">
+        <td>TG Bad Waldsee</td>
+        <td class="num">{sum('points')}</td>
+        <td class="num">{sum('fg2_made')}</td>
+        <td class="num">{sum('fg3_made')}</td>
+        <td class="num">{sum('ft_made')}/{sum('ft_attempted')}</td>
+        <td class="num">{pct(sum('ft_made'), sum('ft_attempted'))}</td>
+        <td class="num">{sum('fouls')}</td>
+      </tr>
+      {
+        opponent?.points !== null && opponent?.points !== undefined && (
+          <tr>
+            <td class="muted">{opponentName}</td>
+            <td class="num">{opponent.points}</td>
+            <td class="num">{opponent.fg2_made}</td>
+            <td class="num">{opponent.fg3_made}</td>
+            <td class="num">{opponent.ft_made}/{opponent.ft_attempted}</td>
+            <td class="num">{pct(opponent.ft_made, opponent.ft_attempted)}</td>
+            <td class="num">{opponent.fouls}</td>
+          </tr>
+        )
+      }
+    </tbody>
+  </table>
+</div>
+<p class="muted note">Spieler erscheinen mit Namen, wenn sie der Veröffentlichung zugestimmt haben. Rebounds, Assists und Einsatzzeit werden in dieser Liga nicht erfasst.</p>
+
+<style>
+  .note { font-size: 0.85rem; margin-top: 10px; }
+</style>

@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro';
+import BoxScore from '../../components/BoxScore.astro';
+import { newsPost, game as getGame, boxScore } from '../../lib/data';
+import { media, newsDate, publicHtml } from '../../lib/format';
+
+const n = await newsPost(Astro.params.slug ?? '');
+if (!n) return Astro.rewrite('/404');
+const g = n.game ? await getGame(n.game) : undefined;
+const box = g?.played ? await boxScore(g.match_id) : undefined;
+---
+
+<Base title={n.title} description={n.summary ?? undefined}>
+  <article class="prose">
+    <p class="muted">{newsDate(n.date_published)}</p>
+    <h1>{n.title}</h1>
+    {n.cover && <img src={media(n.cover, 1600)} alt="" />}
+    <div set:html={publicHtml(n.body)} />
+  </article>
+  {
+    g && (
+      <section class="card section">
+        <h2>
+          <a href={g.href}>{g.home_name} – {g.guest_name} {g.played && `${g.home_score}:${g.guest_score}`}</a>
+        </h2>
+        {box && box.lines.length > 0 && <BoxScore lines={box.lines} opponent={box.opponent} opponentName={g.opponent} />}
+      </section>
+    )
+  }
+  <p class="section"><a href="/news">← Alle News</a></p>
+</Base>

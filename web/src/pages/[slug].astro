@@ -1,0 +1,16 @@
+---
+// Editable fixed pages from the CMS, e.g. /impressum and /datenschutz.
+import Base from '../layouts/Base.astro';
+import { page } from '../lib/data';
+import { publicHtml } from '../lib/format';
+
+const p = await page(Astro.params.slug ?? '');
+if (!p) return Astro.rewrite('/404');
+---
+
+<Base title={p.title}>
+  <article class="prose">
+    <h1>{p.title}</h1>
+    <div set:html={publicHtml(p.body)} />
+  </article>
+</Base>
